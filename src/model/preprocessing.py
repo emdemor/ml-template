@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import logging
 from src.config import *
 from src.base.commons import dataframe_transformer
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -73,9 +74,17 @@ class FeatureClipper(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
+
         X = X.copy()
+
         for feature in self.features_limits:
-            X[feature] = X[feature].clip(*self.features_limits[feature])
+
+            try:
+                X[feature] = X[feature].clip(*self.features_limits[feature])
+
+            except Exception as err:
+                logging.info(err)
+
         return X
 
     def fit_transform(self, X, y=None):
@@ -95,9 +104,17 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
+
         X = X.copy()
+
         for feature in self.features_transformations:
-            X[feature] = X[feature].apply(self.transformer[feature])
+
+            try:
+                X[feature] = X[feature].apply(self.transformer[feature])
+
+            except Exception as err:
+                logging.info(err)
+
         return X
 
     def fit_transform(self, X, y=None):

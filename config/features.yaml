@@ -11,18 +11,18 @@
 - name: x_maximum
   active: True
   type: float
-  limits: [4.0, 1213.0]
+  limits: [4.0, 1713.0]
   transformation: identity
   imputation_strategy: constant
   imputation_param: 42
-  scaler: standard
+  scaler: min_max
   weight: 1
 
 - name: y_minimum
   active: True
   type: float
   limits: [6712.0, 12987661.0]
-  transformation: identity
+  transformation: sqrt
   imputation_strategy: mean
   imputation_param: null
   scaler: min_max
@@ -32,21 +32,21 @@
   active: True
   type: float
   limits: [6724.0, 12987692.0]
-  transformation: identity
+  transformation: sqrt
   imputation_strategy: mean
   imputation_param: null
-  scaler: robust
+  scaler: min_max
   weight: 1
 
 - name: pixels_areas
   active: True
   type: float
   limits: [2.0, 152655.0]
-  transformation: identity
+  transformation: log
   imputation_strategy: mean
   imputation_param: null
-  scaler: null
-  weight: 0.001
+  scaler: min_max
+  weight: 1
 
 - name: x_perimeter
   active: True
@@ -262,76 +262,6 @@
   active: True
   type: float
   limits: [0.12, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  imputation_param: null
-  scaler: min_max
-  weight: 1
-
-- name: pastry
-  active: True
-  type: float
-  limits: [0.0, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  imputation_param: null
-  scaler: min_max
-  weight: 1
-
-- name: z_scratch
-  active: True
-  type: float
-  limits: [0.0, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  imputation_param: null
-  scaler: min_max
-  weight: 1
-
-- name: k_scatch
-  active: True
-  type: float
-  limits: [0.0, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  imputation_param: null
-  scaler: min_max
-  weight: 1
-
-- name: stains
-  active: True
-  type: float
-  limits: [0.0, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  imputation_param: null
-  scaler: min_max
-  weight: 1
-
-- name: dirtiness
-  active: True
-  type: float
-  limits: [0.0, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  imputation_param: null
-  scaler: min_max
-  weight: 1
-
-- name: bumps
-  active: True
-  type: float
-  limits: [0.0, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  imputation_param: null
-  scaler: min_max
-  weight: 1
-
-- name: other_faults
-  active: True
-  type: float
-  limits: [0.0, 1.0]
   transformation: identity
   imputation_strategy: mean
   imputation_param: null
