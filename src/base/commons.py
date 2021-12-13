@@ -1,5 +1,15 @@
 import re
-import yaml
+import git
+import pandas as pd
+
+
+def get_last_git_tag():
+
+    repo = git.Repo()
+
+    latest_tag = sorted(repo.tags, key=lambda t: t.commit.committed_datetime)[-1].name
+
+    return latest_tag
 
 
 def to_snake_case(name):
@@ -13,9 +23,9 @@ def to_snake_case(name):
     return name
 
 
-def get_config(filename):
-
-    with open(filename, "r") as file:
-        settings = yaml.safe_load(file)
-
-    return settings
+def dataframe_transformer(dataframe, transformer):
+    return pd.DataFrame(
+        transformer.transform(dataframe),
+        index=dataframe.index,
+        columns=dataframe.columns,
+    )

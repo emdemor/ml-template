@@ -2,6 +2,7 @@ import pandas as pd
 
 from src.base.commons import to_snake_case
 from src.base.file import read_file_string, download_file
+from src.model import __version__
 
 
 def make_dataset(config, download_bases=False):
