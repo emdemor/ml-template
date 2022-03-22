@@ -9,46 +9,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 from sklearn.pipeline import make_pipeline
 
-
-class PreProcessor(BaseEstimator, TransformerMixin):
-    def __init__(self, features_config):
-        self.features_config = features_config
-        self.feature_names = get_feature_names(self.features_config)
-        self.feature_status = get_feature_status(self.features_config)
-        self.feature_limits = get_feature_limits(self.features_config)
-        self.feature_transformations = get_feature_transformations(self.features_config)
-        self.feature_types = get_feature_types(self.features_config)
-        self.feature_imputation_strategy = get_feature_imputation_strategy(
-            self.features_config
-        )
-        self.feature_imputation_params = get_feature_imputation_params(
-            self.features_config
-        )
-        self.feature_scalers = get_feature_scalers(self.features_config)
-        self.feature_weights = get_feature_weights(self.features_config)
-
-        self.preprocessor = make_pipeline(
-            FeatureImputer(
-                self.feature_names,
-                self.feature_imputation_strategy,
-                self.feature_imputation_params,
-            ),
-            FeatureClipper(self.feature_limits),
-            FeatureTransformer(self.feature_transformations),
-            FeatureScaler(self.feature_scalers),
-            FeatureWeigher(self.feature_weights),
-        )
-
-    def fit(self, X, y=None):
-        self.preprocessor.fit(X)
-        return self
-
-    def transform(self, X, y=None):
-        return self.preprocessor.transform(X)
-
-    def fit_transform(self, X, y=None):
-        self.fit(X)
-        return self.transform(X)
+from sklearn import compose
+from sklearn.pipeline import Pipeline
 
 
 class Identity(BaseEstimator, TransformerMixin):
@@ -66,26 +28,16 @@ class Identity(BaseEstimator, TransformerMixin):
         return self.transform(X)
 
 
-class FeatureClipper(BaseEstimator, TransformerMixin):
-    def __init__(self, features_limits):
-        self.features_limits = features_limits
+class ColumnTransformer:
+    def __init__(self, *args, **kwargs):
+        self.column_transformer = compose.ColumnTransformer(*args, **kwargs)
 
     def fit(self, X, y=None):
+        self.column_transformer.fit(X, y)
         return self
 
     def transform(self, X, y=None):
-
-        X = X.copy()
-
-        for feature in self.features_limits:
-
-            try:
-                X[feature] = X[feature].clip(*self.features_limits[feature])
-
-            except Exception as err:
-                logging.info(err)
-
-        return X
+        return dataframe_transformer(X, self.column_transformer)
 
     def fit_transform(self, X, y=None):
         self.fit(X)
@@ -93,12 +45,9 @@ class FeatureClipper(BaseEstimator, TransformerMixin):
 
 
 class FeatureTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, features_transformations):
-        self.features_transformations = features_transformations
-        self.transformer = {
-            feature: self.__interpret_transformation(features_transformations[feature])
-            for feature in features_transformations
-        }
+    def __init__(self, transformation):
+        self.transformation = transformation
+        self.transformer = self.__interpret_transformation(self.transformation)
 
     def fit(self, X, y=None):
         return self
@@ -107,13 +56,11 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
 
         X = X.copy()
 
-        for feature in self.features_transformations:
+        try:
+            X = X.apply(self.transformer)
 
-            try:
-                X[feature] = X[feature].apply(self.transformer[feature])
-
-            except Exception as err:
-                logging.info(err)
+        except Exception as err:
+            logging.info(err)
 
         return X
 
@@ -148,26 +95,35 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
             return lambda x: x
 
 
+class FeatureClipper(BaseEstimator, TransformerMixin):
+    def __init__(self, limits):
+        self.limits = limits
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+
+        X = X.copy()
+
+        try:
+            X = X.clip(*self.limits)
+
+        except Exception as err:
+            logging.info(err)
+
+        return X
+
+    def fit_transform(self, X, y=None):
+        self.fit(X)
+        return self.transform(X)
+
+
 class FeatureImputer(BaseEstimator, TransformerMixin):
-    def __init__(
-        self, feature_names, feature_imputation_strategy, feature_imputation_params
-    ):
-        self.feature_names = feature_names
-        self.feature_imputation_strategy = feature_imputation_strategy
-        self.feature_imputation_params = feature_imputation_params
-        self.imputer = ColumnTransformer(
-            [
-                (
-                    feature,
-                    self.__interpret_imputation(
-                        self.feature_imputation_strategy[feature],
-                        self.feature_imputation_params[feature],
-                    ),
-                    [i],
-                )
-                for i, feature in enumerate(self.feature_names)
-            ]
-        )
+    def __init__(self, strategy, parameter=None):
+        self.strategy = strategy
+        self.parameter = parameter
+        self.imputer = self.__interpret_imputation(self.strategy, self.parameter)
 
     def fit(self, X, y=None):
         self.imputer.fit(X)
@@ -196,19 +152,9 @@ class FeatureImputer(BaseEstimator, TransformerMixin):
 
 
 class FeatureScaler(BaseEstimator, TransformerMixin):
-    def __init__(self, feature_scalers):
-        self.feature_scalers = feature_scalers
-
-        self.scaler = ColumnTransformer(
-            [
-                (
-                    feature,
-                    self.__interpret_scaler(self.feature_scalers[feature]),
-                    [i],
-                )
-                for i, feature in enumerate(self.feature_scalers)
-            ]
-        )
+    def __init__(self, strategy):
+        self.strategy = strategy
+        self.scaler = self.__interpret_scaler(self.strategy)
 
     def fit(self, X, y=None):
         self.scaler.fit(X)
@@ -240,19 +186,153 @@ class FeatureScaler(BaseEstimator, TransformerMixin):
 
 
 class FeatureWeigher(BaseEstimator, TransformerMixin):
-    def __init__(self, feature_weights):
-        self.feature_weights = feature_weights
+    def __init__(self, weight):
+        self.weight = weight
 
     def fit(self, X, y=None):
         return self
 
     def transform(self, X, y=None):
-
+        X = X.copy()
         for col in X.columns:
-            X[col] = X[col] * self.feature_weights[col]
+            X[col] = X[col] * self.weight
 
         return X
 
     def fit_transform(self, X, y=None):
         self.fit(X)
         return self.transform(X)
+
+
+class PreProcessor(BaseEstimator, TransformerMixin):
+    def __init__(self, features_config):
+
+        for config in features_config:
+            if "active" not in config:
+                config.update({"active": True})
+
+        feature_names = [config["name"] for config in features_config]
+        feature_active = {
+            config["name"]: config["active"] for config in features_config
+        }
+        feature_types = {config["name"]: config["type"] for config in features_config}
+
+        df = pd.DataFrame(
+            [
+                (j, config["name"], config["active"], config["type"], i, k, config[k])
+                for j, config in enumerate(features_config)
+                for i, k in enumerate(
+                    {
+                        k: config[k]
+                        for k in filter(
+                            lambda x: x
+                            not in (
+                                "name",
+                                "active",
+                                "type",
+                                "encode",
+                                "polynomial_degree",
+                            ),
+                            config.keys(),
+                        )
+                    }
+                )
+            ],
+            columns=[
+                "feature_order",
+                "feature_name",
+                "active",
+                "type",
+                "transform_order",
+                "key",
+                "value",
+            ],
+        )
+
+        for order in df["transform_order"].unique():
+            for col in feature_names:
+                if (
+                    len(
+                        df[
+                            (df["feature_name"] == col)
+                            & (df["transform_order"] == order)
+                        ]
+                    )
+                    == 0
+                ):
+                    df = df.append(
+                        [
+                            {
+                                "feature_order": feature_names.index(col),
+                                "feature_name": col,
+                                "active": feature_active[col],
+                                "type": feature_types[col],
+                                "transform_order": order,
+                                "key": "transformation",
+                                "value": "identity",
+                            }
+                        ]
+                    )
+
+        df = df.sort_values(["transform_order", "feature_order"])
+
+        steps = []
+
+        for transform_order in df["transform_order"].unique():
+
+            df_step = df[df["transform_order"] == transform_order].sort_values(
+                "feature_order"
+            )
+            transformers = [
+                (n, self.__interpret_process_step(key, value), [o])
+                for n, o, key, value in df_step[
+                    ["feature_name", "feature_order", "key", "value"]
+                ].to_numpy()
+            ]
+
+            steps.append(
+                (
+                    f"step_{transform_order}",
+                    ColumnTransformer(transformers=transformers),
+                )
+            )
+
+        self.preprocessor = Pipeline(steps=steps)
+
+    def fit(self, X, y=None):
+        self.preprocessor.fit(X, y)
+        return self
+
+    def transform(self, X, y=None):
+        return dataframe_transformer(X, self.preprocessor)
+
+    def fit_transform(self, X, y=None):
+        self.fit(X)
+        return self.transform(X)
+
+    def __interpret_process_step(self, key, value):
+        if key == "transformation":
+            return FeatureTransformer(transformation=value)
+
+        elif key == "limits":
+            return FeatureClipper(limits=value)
+
+        elif key == "imputation_strategy":
+
+            strategy, *param = str(value).split(":")
+
+            if strategy == "constant":
+                param = float(param[0])
+            else:
+                param = None
+
+            return FeatureImputer(strategy="constant", parameter=param)
+
+        elif key == "scaler":
+            return FeatureScaler(strategy=value)
+
+        elif key == "weight":
+            return FeatureWeigher(weight=value)
+
+        else:
+            return Identity()
