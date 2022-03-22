@@ -1,0 +1,129 @@
+- name: age
+  active: true
+  type: int
+  limits: [29, 77]
+  transformation: identity
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: min_max
+  weight: 1
+
+- name: sex
+  active: true
+  type: int
+  limits: [0, 1]
+  transformation: identity
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: min_max
+  weight: 1
+
+- name: cp
+  active: true
+  type: int
+  limits: [0, 3]
+  transformation: identity
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: min_max
+  weight: 1
+
+- name: trtbps
+  active: true
+  type: int
+  limits: [94, 200]
+  transformation: log
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: standard
+  weight: 1
+
+- name: chol
+  active: true
+  type: int
+  limits: [126, 564]
+  transformation: identity
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: min_max
+  weight: 1
+
+- name: fbs
+  active: true
+  type: int
+  limits: [0, 1]
+  transformation: identity
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: min_max
+  weight: 1
+
+- name: restecg
+  active: true
+  type: int
+  limits: [0, 2]
+  transformation: identity
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: min_max
+  weight: 1
+
+- name: thalachh
+  active: true
+  type: int
+  limits: [71, 202]
+  transformation: identity
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: min_max
+  weight: 1
+
+- name: exng
+  active: true
+  type: int
+  limits: [0, 1]
+  transformation: identity
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: min_max
+  weight: 1
+
+- name: oldpeak
+  active: true
+  type: float64
+  limits: [0.0, 6.2]
+  transformation: identity
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: min_max
+  weight: 1
+
+- name: slp
+  active: true
+  type: int
+  limits: [0, 2]
+  transformation: identity
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: min_max
+  weight: 1
+
+- name: caa
+  active: true
+  type: int
+  limits: [0, 4]
+  transformation: identity
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: min_max
+  weight: 1
+
+- name: thall
+  active: true
+  type: int
+  limits: [0, 3]
+  transformation: identity
+  imputation_strategy: mean
+  imputation_param: null
+  scaler: min_max
+  weight: 1
