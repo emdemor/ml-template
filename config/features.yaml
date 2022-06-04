@@ -1,8 +1,9 @@
 - name: x_minimum
   type: float
-  imputation_strategy: mean
+  imputation_strategy: constant:0
   limits: [0.0, 1705.0]
   transformation: identity
+  discretizer: quantile:10
   scaler: robust
   weight: 1
 

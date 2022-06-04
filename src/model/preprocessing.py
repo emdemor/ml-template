@@ -6,11 +6,19 @@ from src.base.commons import dataframe_transformer
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
+from sklearn.preprocessing import (
+    MinMaxScaler,
+    StandardScaler,
+    RobustScaler,
+    KBinsDiscretizer,
+)
 from sklearn.pipeline import make_pipeline
 
 from sklearn import compose
 from sklearn.pipeline import Pipeline
+
+
+# from IPython.display import display
 
 
 class Identity(BaseEstimator, TransformerMixin):
@@ -204,6 +212,70 @@ class FeatureWeigher(BaseEstimator, TransformerMixin):
         return self.transform(X)
 
 
+class FeatureDiscretizer(BaseEstimator, TransformerMixin):
+    def __init__(self, n_bins=5, strategy="uniform"):
+
+        self.strategy = strategy
+        self.value_maps = None
+        self.n_bins = n_bins
+        self.discretizer = KBinsDiscretizer(
+            encode="ordinal", strategy=self.strategy, n_bins=self.n_bins
+        )
+
+    def fit(self, X, y=None):
+
+        self.discretizer.fit(X)
+
+        self.__train_value_maps(X)
+
+        return self
+
+    def transform(self, X, y=None):
+
+        X_result = dataframe_transformer(X, self.discretizer)
+
+        X_result = self.__apply_value_maps(X_result)
+
+        return X_result
+
+    def fit_transform(self, X, y=None):
+        self.fit(X)
+        return self.transform(X)
+
+    def __train_value_maps(self, X):
+
+        X_transf = self.discretizer.transform(X)
+
+        self.value_maps = []
+
+        for i in range(X_transf.shape[1]):
+
+            subs = (
+                pd.DataFrame({"order": X_transf[:, i], "value": X.iloc[:, i].values})
+                .groupby("order")
+                .mean()
+                .to_dict()["value"]
+            )
+
+            self.value_maps.append(subs)
+
+    def __apply_value_maps(self, X_transf):
+
+        temp_columns = {}
+
+        columns = X_transf.columns
+
+        for i in range(X_transf.shape[1]):
+            subs = self.value_maps[i]
+            temp_columns.update(
+                {columns[i]: pd.Series(X_transf.iloc[:, i]).replace(subs)}
+            )
+
+        X_result = pd.DataFrame(temp_columns)
+
+        return X_result
+
+
 class PreProcessor(BaseEstimator, TransformerMixin):
     def __init__(self, features_config):
 
@@ -283,6 +355,7 @@ class PreProcessor(BaseEstimator, TransformerMixin):
             df_step = df[df["transform_order"] == transform_order].sort_values(
                 "feature_order"
             )
+
             transformers = [
                 (n, self.__interpret_process_step(key, value), [o])
                 for n, o, key, value in df_step[
@@ -328,6 +401,14 @@ class PreProcessor(BaseEstimator, TransformerMixin):
 
             return FeatureImputer(strategy="constant", parameter=param)
 
+        elif key == "discretizer":
+
+            strategy, n_bins = str(value).split(":")
+
+            n_bins = int(n_bins)
+
+            return FeatureDiscretizer(n_bins=n_bins, strategy=strategy)
+
         elif key == "scaler":
             return FeatureScaler(strategy=value)
 
@@ -335,4 +416,5 @@ class PreProcessor(BaseEstimator, TransformerMixin):
             return FeatureWeigher(weight=value)
 
         else:
+            print(f"[error] KeyError. {key} not found.")
             return Identity()
