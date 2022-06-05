@@ -836,17 +836,22 @@ class PreProcessor(BaseEstimator, TransformerMixin):
                     )
                     == 0
                 ):
-                    df = df.append(
+                    df = pd.concat(
                         [
-                            {
-                                "feature_order": self.feature_names.index(col),
-                                "feature_name": col,
-                                "active": self.feature_active[col],
-                                "type": self.feature_types[col],
-                                "transform_order": order,
-                                "key": "transformation",
-                                "value": "identity",
-                            }
+                            df,
+                            pd.DataFrame(
+                                [
+                                    {
+                                        "feature_order": self.feature_names.index(col),
+                                        "feature_name": col,
+                                        "active": self.feature_active[col],
+                                        "type": self.feature_types[col],
+                                        "transform_order": order,
+                                        "key": "transformation",
+                                        "value": "identity",
+                                    }
+                                ]
+                            ),
                         ]
                     )
 
