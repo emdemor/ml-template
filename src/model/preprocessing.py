@@ -565,26 +565,92 @@ class FeatureScaler(BaseEstimator, TransformerMixin):
 
 
 class FeatureWeigher(BaseEstimator, TransformerMixin):
+    """
+    FeatureWeigher.
+
+    Multiplies features by a specified factor.
+
+    Parameters
+    ----------
+    weight : float
+        Features weight.
+    """
+
     def __init__(self, weight):
+        """Class constructor"""
         self.weight = weight
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> FeatureWeigher:
+        """Fit weigher using X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        self : FeatureWeigher
+            This estimator.
+        """
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+        """Applies the operation to the input dataframe.
 
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
         for col in X.columns:
             X[col] = X[col] * self.weight
 
         return X
 
     def fit_transform(self, X, y=None):
+        """Fit using X and return the transformed dataframe.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
         self.fit(X)
         return self.transform(X)
 
 
 class FeatureDiscretizer(BaseEstimator, TransformerMixin):
-    def __init__(self, n_bins=5, strategy="uniform"):
+    """
+    FeatureDiscretizer.
+
+    Discretize features according to previously defined strategies.
+
+    Parameters
+    ----------
+    strategy : {'uniform', 'quantile', 'kmeans'}, default='uniform'
+        A label to the discretize strategy
+    n_bins : int, default=5
+        The number of bins, by default 5
+    """
+
+    def __init__(self, n_bins: int = 5, strategy: str = "uniform"):
 
         self.strategy = strategy
         self.value_maps = None
@@ -593,7 +659,21 @@ class FeatureDiscretizer(BaseEstimator, TransformerMixin):
             encode="ordinal", strategy=self.strategy, n_bins=self.n_bins
         )
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> FeatureDiscretizer:
+        """Fit discretizer using X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        self : FeatureDiscretizer
+            This estimator.
+        """
 
         self.discretizer.fit(X)
 
@@ -601,8 +681,21 @@ class FeatureDiscretizer(BaseEstimator, TransformerMixin):
 
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+        """Applies the operation to the input dataframe.
 
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
         X_result = dataframe_transformer(X, self.discretizer)
 
         X_result = self.__apply_value_maps(X_result)
@@ -610,10 +703,31 @@ class FeatureDiscretizer(BaseEstimator, TransformerMixin):
         return X_result
 
     def fit_transform(self, X, y=None):
+        """Fit using X and return the transformed dataframe.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
         self.fit(X)
         return self.transform(X)
 
-    def __train_value_maps(self, X):
+    def __train_value_maps(self, X: pd.DataFrame) -> None:
+        """Fit the mean feature value in each discretized bin.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        """
 
         X_transf = self.discretizer.transform(X)
 
@@ -621,6 +735,10 @@ class FeatureDiscretizer(BaseEstimator, TransformerMixin):
 
         for i in range(X_transf.shape[1]):
 
+            # TODO
+            # Here, I am using aggregation by mean.It will be great
+            # If the user could choose the aggregation operation
+            # as an inputparameter.
             subs = (
                 pd.DataFrame({"order": X_transf[:, i], "value": X.iloc[:, i].values})
                 .groupby("order")
@@ -630,7 +748,15 @@ class FeatureDiscretizer(BaseEstimator, TransformerMixin):
 
             self.value_maps.append(subs)
 
-    def __apply_value_maps(self, X_transf):
+    def __apply_value_maps(self, X_transf: pd.DataFrame):
+        """Apply de substitution of the bin order by\
+        the fitted mean value in each discretized bin.
+
+        Parameters
+        ----------
+        X_transf : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        """
 
         temp_columns = {}
 
