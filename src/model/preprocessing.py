@@ -419,7 +419,9 @@ class FeatureImputer(BaseEstimator, TransformerMixin):
         pd.DataFrame
             The transformed dataframe.
         """
+
         self.fit(X)
+
         return self.transform(X)
 
     def __interpret_imputation(
@@ -457,22 +459,94 @@ class FeatureImputer(BaseEstimator, TransformerMixin):
 
 
 class FeatureScaler(BaseEstimator, TransformerMixin):
-    def __init__(self, strategy):
+    """
+    FeatureScaler.
+
+    Scales the features according to a specified strategy. \
+    The current strategies supported are min_max, standard \
+    and robust scaler.
+
+    Parameters
+    ----------
+    strategy : {'min_max', 'standard', 'robust'}, default='min_max'
+        A label to the scaling strategy.
+    """
+
+    def __init__(self, strategy: str = "min_max"):
+        """Class constructor"""
         self.strategy = strategy
         self.scaler = self.__interpret_scaler(self.strategy)
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> FeatureScaler:
+        """Fit scaler using X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        self : FeatureImputer
+            This estimator.
+        """
+
         self.scaler.fit(X)
+
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+        """Applies the scale operation to the input dataframe.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
         return dataframe_transformer(X, self.scaler)
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+        """Fit scale operation using X and return the transformed dataframe.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
+
         self.fit(X)
+
         return self.transform(X)
 
-    def __interpret_scaler(self, scaler):
+    def __interpret_scaler(self, scaler: str = "min_max") -> TransformerMixin:
+        """Returns a class related to the scale strategy.
+
+        Parameters
+        ----------
+        scaler : {'min_max', 'standard', 'robust'}, default='min_max'
+            A label to the scaling strategy.
+
+        Returns
+        -------
+        TransformerMixin
+            A sklearn-like transformation class.
+        """
 
         if scaler == "min_max":
             return MinMaxScaler()
