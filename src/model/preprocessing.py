@@ -280,7 +280,7 @@ class FeatureClipper(BaseEstimator, TransformerMixin):
 
     def __init__(self, limits: np.array or list or tuple):
         """Class cosntructor"""
-        self.limits = list(limits)
+        self.limits = limits
 
     def fit(self, X: pd.DataFrame, y: pd.Series = None) -> FeatureClipper:
         """Fit clipper using X.
