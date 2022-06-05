@@ -32,7 +32,7 @@ class Identity(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         return X
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
         self.fit(X)
         return self.transform(X)
 
@@ -134,7 +134,7 @@ class ColumnTransformer:
     def transform(self, X: pd.DataFrame, y: pd.Series = None):
         return dataframe_transformer(X, self.column_transformer)
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
         self.fit(X)
         return self.transform(X)
 
@@ -617,7 +617,7 @@ class FeatureWeigher(BaseEstimator, TransformerMixin):
 
         return X
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
         """Fit using X and return the transformed dataframe.
 
         Parameters
@@ -702,7 +702,7 @@ class FeatureDiscretizer(BaseEstimator, TransformerMixin):
 
         return X_result
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
         """Fit using X and return the transformed dataframe.
 
         Parameters
@@ -778,25 +778,107 @@ class PreProcessor(BaseEstimator, TransformerMixin):
         return "PreProcessor()"
 
     def __init__(self, features_config):
+        """Class constructor"""
 
-        for config in features_config:
+        self.features_config = features_config
+
+        self.feature_names = None
+
+        self.feature_active = None
+
+        self.feature_types = None
+
+    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> PreProcessor:
+        """Fit preprocessor using X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        self : PreProcessor
+            This estimator.
+        """
+
+        self.__interpret_config()
+
+        action_plan = self.__create_action_plan()
+
+        self.preprocessor = self.__set_preprocessor(action_plan)
+
+        features = self.__get_active_features()
+
+        self.preprocessor.fit(X[features], y)
+
+        return self
+
+    def transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+        """Applies the operation to the input dataframe.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
+
+        features = self.__get_active_features()
+
+        return dataframe_transformer(X[features], self.preprocessor)
+
+    def fit_transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+        """Fit using X and return the transformed dataframe.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
+        self.fit(X)
+        return self.transform(X)
+
+    def __interpret_config(self) -> None:
+
+        for config in self.features_config:
             if "active" not in config:
                 config.update({"active": True})
 
-        self.feature_names = [config["name"] for config in features_config]
+        self.feature_names = [config["name"] for config in self.features_config]
 
         self.feature_active = {
-            config["name"]: config["active"] for config in features_config
+            config["name"]: config["active"] for config in self.features_config
         }
 
         self.feature_types = {
-            config["name"]: config["type"] for config in features_config
+            config["name"]: config["type"] for config in self.features_config
         }
 
+    def __create_action_plan(self):
+        """
+        Generates a dataframe with ordered steps to be\
+        executed on the Pipeline.
+        """
         df = pd.DataFrame(
             [
                 (j, config["name"], config["active"], config["type"], i, k, config[k])
-                for j, config in enumerate(features_config)
+                for j, config in enumerate(self.features_config)
                 for i, k in enumerate(
                     {
                         k: config[k]
@@ -857,13 +939,25 @@ class PreProcessor(BaseEstimator, TransformerMixin):
 
         df = df.sort_values(["transform_order", "feature_order"])
 
+        return df
+
+    def __set_preprocessor(self, action_plan: pd.DataFrame):
+        """
+        Gets the action plan a generates a Pipeline.
+
+        Parameters
+        ----------
+        action_plan : pd.DataFrame
+            A dataframe with ordered steps to be\
+            executed on the Pipeline.
+        """
         steps = []
 
-        for transform_order in df["transform_order"].unique():
+        for transform_order in action_plan["transform_order"].unique():
 
-            df_step = df[df["transform_order"] == transform_order].sort_values(
-                "feature_order"
-            )
+            df_step = action_plan[
+                action_plan["transform_order"] == transform_order
+            ].sort_values("feature_order")
 
             transformers = [
                 (n, self.__interpret_process_step(key, value), [o])
@@ -880,22 +974,11 @@ class PreProcessor(BaseEstimator, TransformerMixin):
             )
 
         if len(steps) > 0:
-            self.preprocessor = Pipeline(steps=steps)
+            preprocessor = Pipeline(steps=steps)
         else:
-            self.preprocessor = Pipeline(steps=[("step_0", Identity())])
+            preprocessor = Pipeline(steps=[("step_0", Identity())])
 
-    def fit(self, X, y=None):
-        features = self.__get_active_features()
-        self.preprocessor.fit(X[features], y)
-        return self
-
-    def transform(self, X, y=None):
-        features = self.__get_active_features()
-        return dataframe_transformer(X[features], self.preprocessor)
-
-    def fit_transform(self, X, y=None):
-        self.fit(X)
-        return self.transform(X)
+        return preprocessor
 
     def __get_active_features(self):
         return [
