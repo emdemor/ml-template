@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 import logging
@@ -14,8 +16,6 @@ from sklearn.preprocessing import (
 )
 from sklearn import compose
 from sklearn.pipeline import Pipeline
-
-from __future__ import annotations
 
 # from IPython.display import display
 
