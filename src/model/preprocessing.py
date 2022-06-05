@@ -261,24 +261,83 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
 
 
 class FeatureClipper(BaseEstimator, TransformerMixin):
-    def __init__(self, limits):
-        self.limits = limits
+    """
+    Trim values at input threshold(s).
 
-    def fit(self, X, y=None):
+    Assigns values outside boundary to boundary values. Thresholds
+    can be singular values or array like, and in the latter case
+    the clipping is performed element-wise in the specified axis.
+
+    Parameters
+    ----------
+        limits : array-like
+            An array-like value with two elementes with lower and \
+                higher limits to be clipped.
+    """
+
+    def __init__(self, limits: np.array or list or tuple):
+        """Class cosntructor"""
+        self.limits = list(limits)
+
+    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> FeatureClipper:
+        """Fit clipper using X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        self : FeatureClipper
+            This estimator.
+        """
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+        """Applies the clip operation to the input dataframe.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
 
         try:
             X = X.clip(*self.limits)
 
         except Exception as err:
-            logging.info(err)
+            logging.error(err)
+            raise err
 
         return X
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+        """Fit clip operation using X and return the transformed dataframe.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
         self.fit(X)
+
         return self.transform(X)
 
 
