@@ -1,19 +1,17 @@
 import numpy as np
 import pandas as pd
 import logging
+import typing
 from src.config import *
 from src.base.commons import dataframe_transformer
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.impute import SimpleImputer
-from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import (
     MinMaxScaler,
     StandardScaler,
     RobustScaler,
     KBinsDiscretizer,
 )
-from sklearn.pipeline import make_pipeline
-
 from sklearn import compose
 from sklearn.pipeline import Pipeline
 
@@ -142,7 +140,10 @@ class ColumnTransformer:
 
 
 class FeatureTransformer(BaseEstimator, TransformerMixin):
-    """Applies a transformation dataframe.
+    """
+    FeatureTransformer.
+    
+    Applies a transformation dataframe.
 
     Parameters
     ----------
@@ -262,6 +263,8 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
 
 class FeatureClipper(BaseEstimator, TransformerMixin):
     """
+    FeatureClipper.
+
     Trim values at input threshold(s).
 
     Assigns values outside boundary to boundary values. Thresholds
@@ -342,23 +345,103 @@ class FeatureClipper(BaseEstimator, TransformerMixin):
 
 
 class FeatureImputer(BaseEstimator, TransformerMixin):
-    def __init__(self, strategy, parameter=None):
+    """
+    FeatureImputer.
+
+    Treatment of missing values according to previously defined strategies.
+
+    Parameters
+    ----------
+    strategy : {'mean', 'median', 'constant'}, default='mean'
+        A label to the imputation strategy
+    parameter : typing.Any, optional
+        Parameter to complement the imputation strategy.\
+            For example, if the user choose imputation\
+            by a constant value, this value must be passed\
+            as this parameter, by default None
+    """
+
+    def __init__(self, strategy: str = "mean", parameter: typing.Any = None):
+
         self.strategy = strategy
+
         self.parameter = parameter
+
         self.imputer = self.__interpret_imputation(self.strategy, self.parameter)
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> FeatureImputer:
+        """Fit imputer using X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        self : FeatureImputer
+            This estimator.
+        """
         self.imputer.fit(X)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+        """Applies the imputation operation to the input dataframe.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
         return dataframe_transformer(X, self.imputer)
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+        """Fit imputation operation using X and return the transformed dataframe.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
         self.fit(X)
         return self.transform(X)
 
-    def __interpret_imputation(self, imputation, param):
+    def __interpret_imputation(
+        self, imputation: str = "mean", param: typing.Any = None
+    ) -> TransformerMixin:
+        """Returns a class related to the imputation strategy.
+
+        Parameters
+        ----------
+        imputation : {'mean', 'median', 'constant'}, default='mean'
+            A label to the imputation strategy
+        param : typing.Any, optional
+            Parameter to complement the imputation strategy.\
+                For example, if the user choose imputation\
+                by a constant value, this value must be passed\
+                as this parameter, by default None
+
+        Returns
+        -------
+        TransformerMixin
+            A sklearn-like transformation class.
+        """
 
         if imputation == "mean":
             return SimpleImputer(strategy="mean")
