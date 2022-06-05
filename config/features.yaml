@@ -1,242 +1,39 @@
-- name: x_minimum
-  type: float
-  imputation_strategy: constant:0
-  limits: [0.0, 1705.0]
-  transformation: identity
-  discretizer: quantile:10
-  scaler: robust
-  weight: 1
+###################################################
+# EXEMPLOS DE CONFIGURAÇÕES
+#
+# Atenção: as etapas de preprocessamento irão ocorrer
+# na ordem que forem especificadas nesse arquivo.
+#
+# >>> Exemplo:
+# - name: nome_da_feature
+#   type: float
+#   imputation_strategy: constant:0 #(mean, median, constant:<value>)
+#   limits: [0.0, 1705.0]
+#   transformation: identity # (log, log10, log1p, exp, square, sqrt, identity)
+#   discretizer: kmeans:3 # (uniform, quantile)
+#   scaler: robust #, (min_max, standard, robust)
+#   weight: 1
 
-- name: x_maximum
-  active: True
+- name: Age
   type: float
   imputation_strategy: mean
-  limits: [4.0, 1713.0]
-  transformation: identity
-  scaler: min_max
-  weight: 1
-
-- name: y_minimum
-  active: True
-  type: float
-  limits: [6712.0, 12987661.0]
+  limits: [0, 100]
   transformation: sqrt
-  imputation_strategy: mean
+  discretizer: kmeans:5
   scaler: min_max
-  weight: 1
 
-- name: y_maximum
-  active: True
-  type: float
-  limits: [6724.0, 12987692.0]
-  transformation: sqrt
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
+- name: Sex
+  type: int
+  imputation_strategy: 0
 
-- name: pixels_areas
-  active: True
-  type: float
-  limits: [2.0, 152655.0]
-  transformation: log
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
+- name: Cholesterol
+  type: int
+  imputation_strategy: 0
 
-- name: x_perimeter
-  active: True
+- name: Na_to_K
   type: float
-  limits: [2.0, 10449.0]
-  transformation: identity
   imputation_strategy: mean
+  #limits: [0, 100]
+  transformation: square
+  discretizer: quantile:12
   scaler: min_max
-  weight: 1
-
-- name: y_perimeter
-  active: True
-  type: float
-  limits: [1.0, 18152.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: sum_of_luminosity
-  active: True
-  type: float
-  limits: [250.0, 11591414.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: minimum_of_luminosity
-  active: True
-  type: float
-  limits: [0.0, 203.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: maximum_of_luminosity
-  active: True
-  type: float
-  limits: [37.0, 253.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: length_of_conveyer
-  active: True
-  type: float
-  limits: [1227.0, 1794.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: type_of_steel_a300
-  active: True
-  type: float
-  limits: [0.0, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: type_of_steel_a400
-  active: True
-  type: float
-  limits: [0.0, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: steel_plate_thickness
-  active: True
-  type: float
-  limits: [40.0, 300.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: edges_index
-  active: True
-  type: float
-  limits: [0.0, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: empty_index
-  active: True
-  type: float
-  limits: [0.0, 0.94]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: square_index
-  active: True
-  type: float
-  limits: [0.01, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: outside_x_index
-  active: True
-  type: float
-  limits: [0.0, 0.88]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: edges_x_index
-  active: True
-  type: float
-  limits: [0.01, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: edges_y_index
-  active: True
-  type: float
-  limits: [0.05, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: outside_global_index
-  active: True
-  type: float
-  limits: [0.0, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: log_of_areas
-  active: True
-  type: float
-  limits: [0.3, 5.18]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: log_x_index
-  active: True
-  type: float
-  limits: [0.3, 3.07]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: log_y_index
-  active: True
-  type: float
-  limits: [0.0, 4.26]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: orientation_index
-  active: True
-  type: float
-  limits: [-0.99, 0.99]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: luminosity_index
-  active: True
-  type: float
-  limits: [-1.0, 0.64]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1
-
-- name: sigmoid_of_areas
-  active: True
-  type: float
-  limits: [0.12, 1.0]
-  transformation: identity
-  imputation_strategy: mean
-  scaler: min_max
-  weight: 1

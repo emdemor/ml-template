@@ -1,4 +1,1 @@
-data_url: https://archive.ics.uci.edu/ml/machine-learning-databases/00198/Faults.NNA
-data_local_path: data/raw/Faults.NNA
-columns_url: https://archive.ics.uci.edu/ml/machine-learning-databases/00198/Faults27x7_var
-columns_local_path: data/raw/Faults27x7_var
+data_local_path: data/raw/classification-drugs-example.csv
