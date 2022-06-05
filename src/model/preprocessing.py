@@ -17,6 +17,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn import compose
 from sklearn.pipeline import Pipeline
 
+from __future__ import annotations
 
 # from IPython.display import display
 
@@ -55,61 +56,61 @@ class ColumnTransformer:
     transformers : list of tuples
         List of (name, transformer, columns) tuples specifying the
         transformer objects to be applied to subsets of the data.
-        name : str
-            Like in Pipeline and FeatureUnion, this allows the transformer and
-            its parameters to be set using ``set_params`` and searched in grid
-            search.
-        transformer : {'drop', 'passthrough'} or estimator
-            Estimator must support :term:`fit` and :term:`transform`.
-            Special-cased strings 'drop' and 'passthrough' are accepted as
-            well, to indicate to drop the columns or to pass them through
-            untransformed, respectively.
-        columns :  str, array-like of str, int, array-like of int, \
-                array-like of bool, slice or callable
-            Indexes the data on its second axis. Integers are interpreted as
-            positional columns, while strings can reference DataFrame columns
-            by name.  A scalar string or int should be used where
-            ``transformer`` expects X to be a 1d array-like (vector),
-            otherwise a 2d array will be passed to the transformer.
-            A callable is passed the input data `X` and can return any of the
-            above. To select multiple columns by name or dtype, you can use
-            :obj:`make_column_selector`.
-        remainder : {'drop', 'passthrough'} or estimator, default='drop'
-            By default, only the specified columns in `transformers` are
-            transformed and combined in the output, and the non-specified
-            columns are dropped. (default of ``'drop'``).
-            By specifying ``remainder='passthrough'``, all remaining columns that
-            were not specified in `transformers` will be automatically passed
-            through. This subset of columns is concatenated with the output of
-            the transformers.
-            By setting ``remainder`` to be an estimator, the remaining
-            non-specified columns will use the ``remainder`` estimator. The
-            estimator must support :term:`fit` and :term:`transform`.
-            Note that using this feature requires that the DataFrame columns
-            input at :term:`fit` and :term:`transform` have identical order.
-        sparse_threshold : float, default=0.3
-            If the output of the different transformers contains sparse matrices,
-            these will be stacked as a sparse matrix if the overall density is
-            lower than this value. Use ``sparse_threshold=0`` to always return
-            dense.  When the transformed output consists of all dense data, the
-            stacked result will be dense, and this keyword will be ignored.
-        n_jobs : int, default=None
-            Number of jobs to run in parallel.
-            ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-            ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-            for more details.
-        transformer_weights : dict, default=None
-            Multiplicative weights for features per transformer. The output of the
-            transformer is multiplied by these weights. Keys are transformer names,
-            values the weights.
-        verbose : bool, default=False
-            If True, the time elapsed while fitting each transformer will be
-            printed as it is completed.
-        verbose_feature_names_out : bool, default=True
-            If True, :meth:`get_feature_names_out` will prefix all feature names
-            with the name of the transformer that generated that feature.
-            If False, :meth:`get_feature_names_out` will not prefix any feature
-            names and will error if feature names are not unique.
+    name : str
+        Like in Pipeline and FeatureUnion, this allows the transformer and
+        its parameters to be set using ``set_params`` and searched in grid
+        search.
+    transformer : {'drop', 'passthrough'} or estimator
+        Estimator must support :term:`fit` and :term:`transform`.
+        Special-cased strings 'drop' and 'passthrough' are accepted as
+        well, to indicate to drop the columns or to pass them through
+        untransformed, respectively.
+    columns :  str, array-like of str, int, array-like of int, \
+            array-like of bool, slice or callable
+        Indexes the data on its second axis. Integers are interpreted as
+        positional columns, while strings can reference DataFrame columns
+        by name.  A scalar string or int should be used where
+        ``transformer`` expects X to be a 1d array-like (vector),
+        otherwise a 2d array will be passed to the transformer.
+        A callable is passed the input data `X` and can return any of the
+        above. To select multiple columns by name or dtype, you can use
+        :obj:`make_column_selector`.
+    remainder : {'drop', 'passthrough'} or estimator, default='drop'
+        By default, only the specified columns in `transformers` are
+        transformed and combined in the output, and the non-specified
+        columns are dropped. (default of ``'drop'``).
+        By specifying ``remainder='passthrough'``, all remaining columns that
+        were not specified in `transformers` will be automatically passed
+        through. This subset of columns is concatenated with the output of
+        the transformers.
+        By setting ``remainder`` to be an estimator, the remaining
+        non-specified columns will use the ``remainder`` estimator. The
+        estimator must support :term:`fit` and :term:`transform`.
+        Note that using this feature requires that the DataFrame columns
+        input at :term:`fit` and :term:`transform` have identical order.
+    sparse_threshold : float, default=0.3
+        If the output of the different transformers contains sparse matrices,
+        these will be stacked as a sparse matrix if the overall density is
+        lower than this value. Use ``sparse_threshold=0`` to always return
+        dense.  When the transformed output consists of all dense data, the
+        stacked result will be dense, and this keyword will be ignored.
+    n_jobs : int, default=None
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+    transformer_weights : dict, default=None
+        Multiplicative weights for features per transformer. The output of the
+        transformer is multiplied by these weights. Keys are transformer names,
+        values the weights.
+    verbose : bool, default=False
+        If True, the time elapsed while fitting each transformer will be
+        printed as it is completed.
+    verbose_feature_names_out : bool, default=True
+        If True, :meth:`get_feature_names_out` will prefix all feature names
+        with the name of the transformer that generated that feature.
+        If False, :meth:`get_feature_names_out` will not prefix any feature
+        names and will error if feature names are not unique.
     """
 
     def __init__(self, *args, **kwargs):
@@ -132,7 +133,7 @@ class ColumnTransformer:
         self.column_transformer.fit(X, y)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X: pd.DataFrame, y: pd.Series = None):
         return dataframe_transformer(X, self.column_transformer)
 
     def fit_transform(self, X, y=None):
@@ -141,30 +142,96 @@ class ColumnTransformer:
 
 
 class FeatureTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, transformation):
+    """Applies a transformation dataframe.
+
+    Parameters
+    ----------
+        transformation : {'log', 'log10', 'exp', 'square',\
+            'sqrt', 'identity'}, default='identity'
+            A string with the decription of a transformation to be applied.
+    """
+
+    def __init__(self, transformation: str = "identity"):
+        """Class constructor"""
         self.transformation = transformation
         self.transformer = self.__interpret_transformation(self.transformation)
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> FeatureTransformer:
+        """Fit transformations using X.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        self : FeatureTransformer
+            This estimator.
+        """
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+        """Applies the transformation to the input dataframe.
 
-        X = X.copy()
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
 
         try:
             X = X.apply(self.transformer)
 
         except Exception as err:
-            logging.info(err)
+            logging.error(err)
+            raise err
 
         return X
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+        """Fit transformations using X and return the transformed dataframe.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Input data of shape (n_samples, n_features).
+        y : pd.Series, optional
+            Targets for supervised learning, by default None
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed dataframe.
+        """
+
         self.fit(X)
+
         return self.transform(X)
 
-    def __interpret_transformation(self, transformation):
+    def __interpret_transformation(self, transformation: str = "identity") -> function:
+        """Returns a function related to the transformation operation.
+
+        Parameters
+        ----------
+        transformation : {'log', 'log10', 'exp', 'square',\
+            'sqrt', 'identity'}, default='identity'
+            A string with the decription of a transformation to be applied.
+
+        Returns
+        -------
+        function
+            A function related to the transformation operation.
+        """
 
         if transformation == "log":
             return np.log
@@ -188,7 +255,9 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
             return lambda x: x
 
         else:
-            return lambda x: x
+            raise ValueError(
+                f"The value {transformation} for 'transformation' is not supported."
+            )
 
 
 class FeatureClipper(BaseEstimator, TransformerMixin):
@@ -199,8 +268,6 @@ class FeatureClipper(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-
-        X = X.copy()
 
         try:
             X = X.clip(*self.limits)
@@ -289,7 +356,7 @@ class FeatureWeigher(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        X = X.copy()
+
         for col in X.columns:
             X[col] = X[col] * self.weight
 
